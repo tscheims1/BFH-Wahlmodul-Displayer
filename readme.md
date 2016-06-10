@@ -1,4 +1,4 @@
-#Wahlmodul Displayer (Spring Edition)
+#Wahlmodul Displayer (Fall Edition)
 
 1. Download HTML content from http://www.ti.bfh.ch/bachelor/informatik/studierende/module/tabs/wahlmodule.html
 (because of same origin policy)
