@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN""http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <title>BFH Wahlmodulübersicht</title>
+
+  <link rel='stylesheet' type='text/css' href='libs/css/smoothness/jquery-ui-1.8.11.custom.css' />
+  <link rel='stylesheet' type='text/css' href='jquery.weekcalendar.css' />
+  <style type='text/css'>
+  body {
+    font-family: "Lucida Grande",Helvetica,Arial,Verdana,sans-serif;
+    margin: 0;
+  }
+
+  h1 {
+    /*margin: 0 0 1em;
+    padding: 0.5em;*/
+  }
+
+  p.description {
+    font-size: 0.8em;
+    padding: 1em;
+    position: absolute;
+    top: 3.2em;
+    margin-right: 400px;
+  }
+
+  #message {
+    font-size: 0.7em;
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    width: 350px;
+    display: none;
+    padding: 1em;
+    background: #ffc;
+    border: 1px solid #dda;
+  }
+  </style>
+
+  <script type='text/javascript' src='libs/jquery-1.4.4.min.js'></script>
+  <script type='text/javascript' src='libs/jquery-ui-1.8.11.custom.min.js'></script>
+
+  <script type="text/javascript" src="libs/date.js"></script>
+  <script type='text/javascript' src='jquery.weekcalendar.js'></script>
+  <script type='text/javascript'>
+	var dayOffset = 
+	{
+	 'Mo':0,
+	 'Di':1,
+	 'Mi':2,
+	 'Do':3,
+	 'Fr':4,
+	};
+	var eventDataBFH = {};
+	eventDataBFH.events = [];
+	//read file from disk
+	function readSingleFile(e) {
+		  var file = e.target.files[0];
+		  if (!file) {
+			return;
+		  }
+		  var reader = new FileReader();
+		  reader.onload = function(e) {
+			var contents = e.target.result;
+			displayContents(contents);
+		  };
+		  reader.readAsText(file);
+		}
+		function displayContents(contents) {
+			
+		//parse the file
+		  var i = 1;
+		  $(contents).find('.break-all').each(function(index,ele)
+		  {
+			  if($(ele).find('.qg-wp-col3').text() == 'HS')
+			  {						
+				  var event = {}
+				  event.loc = $(ele).find('.qg-wp-col2').text();
+				  event.day =  $(ele).find('.qg-wp-col4').text();
+				  event.time =  $(ele).find('.qg-wp-col5').text();
+				  event.module =  $(ele).find('.qg-wp-col8 span').text();
+				  
+				  //get current monday
+				  d = new Date();
+				  var day = d.getDay(),
+					  diff = d.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
+				  dMonday = new Date(d.setDate(diff));
+				  
+				  eventDate = dMonday.addDays(dayOffset[event.day]);
+				  timeSlice = event.time.split('-');
+				  startTime = timeSlice[0].split(':');
+				  endTime = timeSlice[1].split(':');
+				  
+				  eventDateStart = new Date(eventDate.getFullYear(),eventDate.getMonth(),eventDate.getDate(),startTime[0],startTime[1]);
+				  eventDateEnd = new Date(eventDate.getFullYear(),eventDate.getMonth(),eventDate.getDate(),endTime[0],endTime[1]);
+				  
+				  var calendarEvent = 
+				  {
+					  'id':i,
+					  'start':eventDateStart,
+					  'end':eventDateEnd,
+					  'title':event.module +' ' +event.loc,
+					};
+					i++;
+				  eventDataBFH.events.push(calendarEvent);
+			  
+			  }
+			});
+			$('#calendar').weekCalendar({
+      timeslotsPerHour: 6,
+      timeslotHeigh: 30,
+      hourLine: true,
+      data: eventDataBFH,
+      allowCalEventOverlap:true,
+      overlapEventsSeparate:true,
+      firstDayOfWeek:1,
+      daysToShow:5,
+      height: function($calendar) {
+        return $(window).height() - $('h1').outerHeight(true);
+      },
+      eventRender : function(calEvent, $event) {
+        if (calEvent.end.getTime() < new Date().getTime()) {
+          $event.css('backgroundColor', '#aaa');
+          $event.find('.time').css({'backgroundColor': '#999', 'border':'1px solid #888'});
+        }
+      },
+      eventNew: function(calEvent, $event) {
+        displayMessage('<strong>Added event</strong><br/>Start: ' + calEvent.start + '<br/>End: ' + calEvent.end);
+        alert('You\'ve added a new event. You would capture this event, add the logic for creating a new event with your own fields, data and whatever backend persistence you require.');
+      },
+      eventDrop: function(calEvent, $event) {
+        displayMessage('<strong>Moved Event</strong><br/>Start: ' + calEvent.start + '<br/>End: ' + calEvent.end);
+      },
+      eventResize: function(calEvent, $event) {
+        displayMessage('<strong>Resized Event</strong><br/>Start: ' + calEvent.start + '<br/>End: ' + calEvent.end);
+      },
+      eventClick: function(calEvent, $event) {
+        displayMessage('<strong>Clicked Event</strong><br/>Start: ' + calEvent.start + '<br/>End: ' + calEvent.end);
+      },
+      eventMouseover: function(calEvent, $event) {
+        displayMessage('<strong>Mouseover Event</strong><br/>Start: ' + calEvent.start + '<br/>End: ' + calEvent.end);
+      },
+      eventMouseout: function(calEvent, $event) {
+        displayMessage('<strong>Mouseout Event</strong><br/>Start: ' + calEvent.start + '<br/>End: ' + calEvent.end);
+      },
+      noEvents: function() {
+        displayMessage('There are no events for this week');
+      }
+    });
+
+    function displayMessage(message) {
+      //$('#message').html(message).fadeIn();
+    }
+
+    $('<div id="message" class="ui-corner-all"></div>').prependTo($('body'));
+			
+			
+		}
+
+		
+	  
+	  
+  var year = new Date().getFullYear();
+  var month = new Date().getMonth();
+  var day = new Date().getDate();
+
+
+  var eventData = {
+    events : [
+      {'id':1, 'start': new Date(year, month, day, 12), 'end': new Date(year, month, day, 13, 35),'title':'Lunch with Mike'},
+      {'id':2, 'start': new Date(year, month, day, 14), 'end': new Date(year, month, day, 14, 45),'title':'Dev Meeting'},
+      {'id':3, 'start': new Date(year, month, day + 1, 18), 'end': new Date(year, month, day + 1, 18, 45),'title':'Hair cut'},
+      {'id':4, 'start': new Date(year, month, day - 1, 8), 'end': new Date(year, month, day - 1, 9, 30),'title':'Team breakfast'},
+      {'id':5, 'start': new Date(year, month, day + 1, 14), 'end': new Date(year, month, day + 1, 15),'title':'Product showcase'}
+    ]
+  };
+
+  $(document).ready(function() {
+	 document.getElementById('file-input')
+		  .addEventListener('change', readSingleFile, false); 
+	  
+	  
+    
+  });
+
+</script>
+</head>
+<body>
+  	<!--<object type="text/html" data="http://www.ti.bfh.ch/bachelor/informatik/studierende/module/tabs/wahlmodule.html" style="width:100%; height:100%">-->
+  <span><strong>BFH Wahlmoduleübersicht</strong></span>
+	<input type="file" id="file-input" />
+  <div id='calendar'></div>
+
+</body>
+</html>
